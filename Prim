@@ -1,0 +1,83 @@
+# Prim's Minimum Spanning Tree (MST) algorithm.
+ 
+import sys #Library for INT_MAX
+ 
+class Graph():
+ 
+    def __init__(self, vertices):
+        self.V = vertices
+        self.graph = [[0 for column in range(vertices)]
+                    for row in range(vertices)]
+ 
+    # Uma função para imprimir o MST construído armazenado em parent[]
+    def printMST(self, parent):
+        print "Edge \tWeight"
+        for i in range(1, self.V):
+            print parent[i], "-", i, "\t", self.graph[i][ parent[i] ]
+ 
+    # Uma função para encontrar
+    # o vértice com valor de distância mínima,
+    # a partir do conjunto de vértices ainda
+    # não incluídos na árvore do caminho mais curto
+    def minKey(self, key, mstSet):
+ 
+        # Inicializa valor min 
+        min = sys.maxint
+ 
+        for v in range(self.V):
+            if key[v] < min and mstSet[v] == False:
+                min = key[v]
+                min_index = v
+ 
+        return min_index
+ 
+    # Função para construir e imprimir MST para um gráfico
+    # representado usando representação de matriz de adjacência
+    def primMST(self):
+ 
+        # chave usados para escolher a aresta de peso mínimo 
+        key = [sys.maxint] * self.V
+        parent = [None] * self.V  # Array para armazenar o MST construído
+        # chave = 0 para que este vértice seja escolhido como primeiro vértice
+        key[0] = 0
+        mstSet = [False] * self.V
+ 
+        parent[0] = -1 # O primeiro nó é sempre a raiz 
+ 
+        for cout in range(self.V):
+ 
+            # Escolha o vértice de distância mínima de um
+            # conjunto de vértices ainda não processados.
+            # u é sempre igual a src na primeira iteração
+
+            u = self.minKey(key, mstSet)
+ 
+            # Coloque o vértice de distância mínima 
+            # na árvore do caminho mais curto
+            mstSet[u] = True
+ 
+            # Atualize o valor dist dos vértices adjacentes
+            # do vértice escolhido somente se a atual
+            # distância é maior que a nova distância e
+            # o vértice não está na árvore do caminho mais curto
+            
+            for v in range(self.V):
+ 
+                # graph[u][v] é diferente de zero apenas para vértices adjacentes de m
+                # mstSet[v] é falso para vértices ainda não incluídos no MST
+                # Atualize a chave somente se graph[u][v] for menor que key[v]
+                
+                if self.graph[u][v] > 0 and mstSet[v] == False and key[v] > self.graph[u][v]:
+                        key[v] = self.graph[u][v]
+                        parent[v] = u
+ 
+        self.printMST(parent)
+ 
+g = Graph(5)
+g.graph = [ [0, 2, 0, 6, 0],
+            [2, 0, 3, 8, 5],
+            [0, 3, 0, 0, 7],
+            [6, 8, 0, 0, 9],
+            [0, 5, 7, 9, 0]]
+ 
+g.primMST();
