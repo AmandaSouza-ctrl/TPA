@@ -80,12 +80,11 @@ def callback(palavraValidada):
 def main():
   # carregamento dos dados do arquivo para a tabela hash
 
-  with open('teste.txt', encoding="utf8", errors='ignore') as dicionario:
-    #arquivo original 'pt.dic'
+  with open('pt.dic', encoding="utf8", errors='ignore') as dicionario:
     contents = dicionario.readlines()
   
   # for i in range(len(contents)):
-  for i in range(6):
+  for i in range(5000):
     H.put(contents[i].strip().replace('\00', ''),i)
   
   e.pack() # exibição do frame
