@@ -1,83 +1,113 @@
-# Prim's Minimum Spanning Tree (MST) algorithm.
- 
-import sys #Library for INT_MAX
- 
-class Graph():
- 
-    def __init__(self, vertices):
-        self.V = vertices
-        self.graph = [[0 for column in range(vertices)]
-                    for row in range(vertices)]
- 
-    # Uma função para imprimir o MST construído armazenado em parent[]
-    def printMST(self, parent):
-        print ("Edge \tWeight")
-        for i in range(1, self.V):
-            print (parent[i], "-", i, "\t", self.graph[i][ parent[i] ])
- 
-    # Uma função para encontrar
-    # o vértice com valor de distância mínima,
-    # a partir do conjunto de vértices ainda
-    # não incluídos na árvore do caminho mais curto
-    def minKey(self, key, mstSet):
- 
-        # Inicializa valor min 
-        min = sys.maxint
- 
-        for v in range(self.V):
-            if key[v] < min and mstSet[v] == False:
-                min = key[v]
-                min_index = v
- 
-        return min_index
- 
-    # Função para construir e imprimir MST para um gráfico
-    # representado usando representação de matriz de adjacência
-    def primMST(self):
- 
-        # chave usados para escolher a aresta de peso mínimo 
-        key = [sys.maxint] * self.V
-        parent = [None] * self.V  # Array para armazenar o MST construído
-        # chave = 0 para que este vértice seja escolhido como primeiro vértice
-        key[0] = 0
-        mstSet = [False] * self.V
- 
-        parent[0] = -1 # O primeiro nó é sempre a raiz 
- 
-        for cout in range(self.V):
- 
-            # Escolha o vértice de distância mínima de um
-            # conjunto de vértices ainda não processados.
-            # u é sempre igual a src na primeira iteração
+from queue import PriorityQueue
+from random import randint, uniform
 
-            u = self.minKey(key, mstSet)
- 
-            # Coloque o vértice de distância mínima 
-            # na árvore do caminho mais curto
-            mstSet[u] = True
- 
-            # Atualize o valor dist dos vértices adjacentes
-            # do vértice escolhido somente se a atual
-            # distância é maior que a nova distância e
-            # o vértice não está na árvore do caminho mais curto
-            
-            for v in range(self.V):
- 
-                # graph[u][v] é diferente de zero apenas para vértices adjacentes de m
-                # mstSet[v] é falso para vértices ainda não incluídos no MST
-                # Atualize a chave somente se graph[u][v] for menor que key[v]
-                
-                if self.graph[u][v] > 0 and mstSet[v] == False and key[v] > self.graph[u][v]:
-                        key[v] = self.graph[u][v]
-                        parent[v] = u
- 
-        self.printMST(parent)
- 
-g = Graph(5)
-g.graph = [ [0, 2, 0, 6, 0],
-            [2, 0, 3, 8, 5],
-            [0, 3, 0, 0, 7],
-            [6, 8, 0, 0, 9],
-            [0, 5, 7, 9, 0]]
- 
-g.primMST()
+import networkx as nx
+from matplotlib import animation, rc
+import matplotlib.pyplot as plt
+
+# inicialização da animação a ser feita
+rc('animation', html='html5')
+
+# número de pontos de abastecimento
+NUM_NODES = 14
+
+def random_node():
+  # criação de nó aleatório
+  return randint(0, NUM_NODES-1)
+
+def random_weight():
+  # criação de peso aleatório
+  return uniform(0, 1)
+
+# declaração do grafo
+graph = nx.Graph()
+
+# for i in range(1, NUM_NODES):
+#   # adição das arestas no grafo
+#   graph.add_edge(i-1, i, weight=random_weight())
+
+for _ in range(NUM_NODES * 5):
+  # adição das arestas no grafo
+  graph.add_edge(
+      random_node(), random_node(), weight=random_weight()
+  )
+
+# declaração de layout aleatório a partir do grafo gerado
+pos = nx.random_layout(graph)
+
+# lista de tuplas de todas as arestas
+all_edges = set(
+  tuple(sorted((n1, n2))) for n1, n2 in graph.edges()
+)
+edges_in_mst = set()
+nodes_on_mst = set()
+
+# plot dos itens no grafo
+fig, ax = plt.subplots(figsize=(6,4))
+
+
+def prims():
+  # criação da lista de prioridades
+  pqueue = PriorityQueue()
+
+  # definição do nó inicial
+  start_node = 5
+
+  # visita os vizinhos do nó inicial
+  for neighbor in graph.neighbors(start_node):
+    edge_data = graph.get_edge_data(start_node, neighbor)
+    edge_weight = edge_data["weight"]
+    pqueue.put((edge_weight, (start_node, neighbor)))
+
+  # percorre toda a lista de nós da árvore
+  while len(nodes_on_mst) < NUM_NODES:
+    # pega a aresta de menor peso da lista de prioridade
+    _, edge = pqueue.get(pqueue)
+  
+    if edge[0] not in nodes_on_mst:
+      new_node = edge[0]
+    elif edge[1] not in nodes_on_mst:
+      new_node = edge[1]
+    else:
+      # pula se já existir uma aresta menor inserida na lista
+      continue
+  
+    # para cada nó que é adicionado na fila, adiciona a proxima aresta na lista de prioridade
+    for neighbor in graph.neighbors(new_node):
+      edge_data = graph.get_edge_data(new_node, neighbor)
+      edge_weight = edge_data["weight"]
+      pqueue.put((edge_weight, (new_node, neighbor)))
+  
+    # adiciona a aresta na árvore
+    edges_in_mst.add(tuple(sorted(edge)))
+    nodes_on_mst.add(new_node)
+  
+    # coleta as arestas da árvore
+    yield edges_in_mst
+
+def update(mst_edges):
+  # função de atualização dos pontos a serem plotados na animação
+  ax.clear()
+  nx.draw_networkx_edges(
+    graph, pos, edgelist=all_edges-mst_edges, alpha=0.1,
+    edge_color='g', width=1, ax=ax
+  )
+  nx.draw_networkx_edges(
+    graph, pos, edgelist=mst_edges, alpha=1.0,
+    edge_color='b', width=1, ax=ax
+  )
+  nx.draw_networkx_labels(graph, pos, {n: n for n in graph}, font_size=8)
+
+def do_nothing():
+  # função inicial da animação
+  pass
+
+ani = animation.FuncAnimation(
+    fig,
+    update,
+    init_func=do_nothing,
+    frames=prims,
+    interval=500,
+)
+
+ani
